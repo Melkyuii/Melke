@@ -336,11 +336,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let selectedCategory = null;
   let selectedColor = null;
+const loadingSpinner = document.getElementById('loadingSpinner');
 
 classifyButton.addEventListener('click', () => {
+    loadingSpinner.style.display = 'block'; // Show spinner
+    
     const file = imageInput.files[0];
     if (!file) {
         alert('Please upload an image first.');
+        loadingSpinner.style.display = 'none'; // Hide spinner
         return;
     }
 
@@ -349,16 +353,22 @@ classifyButton.addEventListener('click', () => {
         const img = new Image();
         img.src = event.target.result;
         img.onload = () => {
-           Vibrant.from(img).getPalette()
-    .then((palette) => {
-        const colors = Object.values(palette).map(swatch => swatch.rgb).slice(0, 3);
-        showCategories();
-        setupColorButtons(colors);
-    })
-    .catch((err) => {
-        console.error('Error extracting colors:', err);
-        alert('Failed to process the image. Please try again.');
-    });
+            Vibrant.from(img).getPalette()
+                .then((palette) => {
+                    loadingSpinner.style.display = 'none'; // Hide spinner
+                    const colors = Object.values(palette).map(swatch => swatch.rgb).slice(0, 3);
+                    showCategories();
+                    setupColorButtons(colors);
+                })
+                .catch((err) => {
+                    console.error('Error extracting colors:', err);
+                    alert('Failed to process the image. Please try again.');
+                    loadingSpinner.style.display = 'none'; // Hide spinner
+                });
+        };
+    };
+    reader.readAsDataURL(file);
+});
 
 
 
