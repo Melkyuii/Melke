@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const imageInput = document.getElementById('imageInput');
   const classifyButton = document.getElementById('classifyButton');
+  const loadingSpinner = document.getElementById('loadingSpinner');
   const categorySection = document.getElementById('categories');
   const colorSection = document.getElementById('colors');
   const resultSection = document.getElementById('result');
@@ -9,8 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const productList = document.getElementById('productList');
 
   const dataset = [
-   [
-{ 
+    { 
     "name": "Black Coat 2", 
     "category": "coats", 
     "color": [1, 1, 1], 
@@ -329,15 +329,14 @@ document.addEventListener('DOMContentLoaded', () => {
     "category": "Sweaters", 
     "color": [237, 234, 227], 
     "file": "matched_items/White Sweater 2.png", 
-    "link": "Ekru Kadın Dik Yaka Kazak Uzun Kollu Saç Örgü Desenli 5WAK90087HT | Koton"}]
+    "link": "Ekru Kadın Dik Yaka Kazak Uzun Kollu Saç Örgü Desenli 5WAK90087HT | Koton"}
   ];
+  
 
   const categories = ["coats", "sweaters", "boots", "pants", "skirts"];
 
   let selectedCategory = null;
   let selectedColor = null;
-
-  const loadingSpinner = document.getElementById('loadingSpinner');
 
   classifyButton.addEventListener('click', () => {
     loadingSpinner.style.display = 'block'; // Show spinner
@@ -354,22 +353,51 @@ document.addEventListener('DOMContentLoaded', () => {
       const img = new Image();
       img.src = event.target.result;
       img.onload = () => {
-        Vibrant.from(img).getPalette()
-          .then((palette) => {
-            loadingSpinner.style.display = 'none'; // Hide spinner
-            const colors = Object.values(palette).map(swatch => swatch.rgb).slice(0, 3);
-            showCategories();
-            setupColorButtons(colors);
-          })
-          .catch((err) => {
-            console.error('Error extracting colors:', err);
-            alert('Failed to process the image. Please try again.');
-            loadingSpinner.style.display = 'none'; // Hide spinner
-          });
+        const dominantColor = extractDominantColor(img);
+        loadingSpinner.style.display = 'none';
+
+        console.log('Dominant Color:', dominantColor); // Example: [255, 0, 0]
+        showCategories();
+        setupColorButtons([dominantColor]); // Pass the dominant color
       };
     };
     reader.readAsDataURL(file);
   });
+
+  function extractDominantColor(img) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Resize canvas to match the image dimensions
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0, img.width, img.height);
+
+    // Get image data from the canvas
+    const imageData = ctx.getImageData(0, 0, img.width, img.height);
+    const pixels = imageData.data; // Contains all pixel data (RGBA)
+
+    // Calculate the dominant color
+    return calculateDominantColor(pixels);
+  }
+
+  function calculateDominantColor(pixels) {
+    const colorCounts = {};
+    let maxCount = 0;
+    let dominantColor = [0, 0, 0];
+
+    for (let i = 0; i < pixels.length; i += 4) {
+      const rgb = `${pixels[i]},${pixels[i + 1]},${pixels[i + 2]}`; // R,G,B string
+      colorCounts[rgb] = (colorCounts[rgb] || 0) + 1;
+
+      if (colorCounts[rgb] > maxCount) {
+        maxCount = colorCounts[rgb];
+        dominantColor = [pixels[i], pixels[i + 1], pixels[i + 2]];
+      }
+    }
+
+    return dominantColor;
+  }
 
   function showCategories() {
     categoryButtons.innerHTML = '';
@@ -389,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setupColorButtons(colors) {
     colorButtons.innerHTML = '';
-    const basicColors = ["Red", "Green", "Blue", "Brown", "Black"];
+    const basicColors = ["Red", "Green", "Blue", "Other"];
     colors.forEach((rgb, index) => {
       const [r, g, b] = rgb;
       const colorName = basicColors[index] || `Color ${index + 1}`;
