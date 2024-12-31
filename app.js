@@ -376,7 +376,6 @@ classifyButton.addEventListener('click', () => {
                 showCategories();
                 setupColorButtons(colors);
             });
-        };
     };
     reader.readAsDataURL(file);
 });
