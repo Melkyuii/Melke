@@ -9,7 +9,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const productList = document.getElementById('productList');
 
   const dataset = [
-    // Example dataset entries go here
+    {
+      name: "Cozy Coat",
+      category: "coats",
+      color: [255, 0, 0],
+      file: "images/coat1.jpg",
+      link: "https://example.com/coat1"
+    },
+    {
+      name: "Stylish Sweater",
+      category: "sweaters",
+      color: [0, 255, 0],
+      file: "images/sweater1.jpg",
+      link: "https://example.com/sweater1"
+    },
+    {
+      name: "Chic Boots",
+      category: "boots",
+      color: [0, 0, 255],
+      file: "images/boots1.jpg",
+      link: "https://example.com/boots1"
+    }
   ];
 
   const categories = ["coats", "sweaters", "boots", "pants", "skirts"];
