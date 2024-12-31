@@ -349,12 +349,18 @@ classifyButton.addEventListener('click', () => {
         const img = new Image();
         img.src = event.target.result;
         img.onload = () => {
-            Vibrant.from(img).getPalette((err, palette) => {
-                if (err) {
-                    console.error('Error extracting colors:', err);
-                    alert('Failed to process the image. Please try again.');
-                    return;
-                }
+           Vibrant.from(img).getPalette()
+    .then((palette) => {
+        const colors = Object.values(palette).map(swatch => swatch.rgb).slice(0, 3);
+        showCategories();
+        setupColorButtons(colors);
+    })
+    .catch((err) => {
+        console.error('Error extracting colors:', err);
+        alert('Failed to process the image. Please try again.');
+    });
+
+
 
                 const colors = Object.values(palette).map(swatch => swatch.rgb).slice(0, 3);
                 showCategories();
