@@ -340,7 +340,7 @@ const loadingSpinner = document.getElementById('loadingSpinner');
 
 classifyButton.addEventListener('click', () => {
     loadingSpinner.style.display = 'block'; // Show spinner
-    
+
     const file = imageInput.files[0];
     if (!file) {
         alert('Please upload an image first.');
@@ -369,6 +369,7 @@ classifyButton.addEventListener('click', () => {
     };
     reader.readAsDataURL(file);
 });
+
 
 
 
