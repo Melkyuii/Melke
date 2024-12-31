@@ -18,27 +18,34 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedCategory = null;
   let selectedColor = null;
 
-  classifyButton.addEventListener('click', () => {
+classifyButton.addEventListener('click', () => {
     const file = imageInput.files[0];
     if (!file) {
-      alert('Please upload an image first.');
-      return;
+        alert('Please upload an image first.');
+        return;
     }
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = () => {
-        Vibrant.from(img).getPalette().then((palette) => {
-          const colors = Object.values(palette).map(swatch => swatch.getRgb()).slice(0, 3);
-          showCategories();
-          setupColorButtons(colors);
-        });
-      };
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+            Vibrant.from(img).getPalette((err, palette) => {
+                if (err) {
+                    console.error('Error extracting colors:', err);
+                    alert('Failed to process the image. Please try again.');
+                    return;
+                }
+
+                const colors = Object.values(palette).map(swatch => swatch.rgb).slice(0, 3);
+                showCategories();
+                setupColorButtons(colors);
+            });
+        };
     };
     reader.readAsDataURL(file);
-  });
+});
+
 
   function showCategories() {
     categoryButtons.innerHTML = '';
