@@ -464,9 +464,12 @@
     // If no color is selected, match all items in the selected category
     if (!selectedColor) return item.category === selectedCategory;
 
+    // Ensure the item has a colors array; fallback to an empty array if missing
+    const itemColors = item.colors || [];
+
     // Check if any color in the item's colors array is within the range
     return item.category === selectedCategory &&
-           item.colors.some(color => (
+           itemColors.some(color => (
              Math.abs(color[0] - selectedColor[0]) <= range &&
              Math.abs(color[1] - selectedColor[1]) <= range &&
              Math.abs(color[2] - selectedColor[2]) <= range
