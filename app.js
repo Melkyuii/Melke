@@ -1,4 +1,4 @@
- document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
   const imageInput = document.getElementById('imageInput');
   const classifyButton = document.getElementById('classifyButton');
   const loadingSpinner = document.getElementById('loadingSpinner');
@@ -9,7 +9,7 @@
   const colorButtons = document.getElementById('colorButtons');
   const productList = document.getElementById('productList');
 
- const dataset = [
+  const dataset = [
     { 
     "name": "Black Coat 2", 
     "category": "coats", 
@@ -351,10 +351,10 @@
       const img = new Image();
       img.src = event.target.result;
       img.onload = () => {
-        const dominantColors = extractDominantColors(img, 6); // Extract 6 colors
+        const dominantColors = extractDominantColors(img, 6);
         loadingSpinner.style.display = 'none';
 
-        console.log('Dominant Colors:', dominantColors); // Debugging
+        console.log('Dominant Colors:', dominantColors);
         showCategories();
         setupColorButtons(dominantColors);
       };
@@ -366,7 +366,6 @@
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
-    // Focus on the middle 50% of the image
     const regionWidth = img.width * 0.5;
     const regionHeight = img.height * 0.5;
     const startX = (img.width - regionWidth) / 2;
@@ -407,6 +406,24 @@
     return dominantColors;
   }
 
+  function consolidateColors(colors, range) {
+    const consolidated = [];
+
+    colors.forEach((color) => {
+      const isSimilar = consolidated.some((existingColor) =>
+        Math.abs(color[0] - existingColor[0]) <= range &&
+        Math.abs(color[1] - existingColor[1]) <= range &&
+        Math.abs(color[2] - existingColor[2]) <= range
+      );
+
+      if (!isSimilar) {
+        consolidated.push(color);
+      }
+    });
+
+    return consolidated;
+  }
+
   function mapColorToBasicName(rgb) {
     const [r, g, b] = rgb;
     if (r > 200 && g > 200 && b > 200) return "White";
@@ -438,7 +455,16 @@
 
   function setupColorButtons(colors) {
     colorButtons.innerHTML = '';
-    colors.forEach((rgb) => {
+
+    const range = 50;
+    const consolidatedColors = consolidateColors(colors, range);
+
+    const message = consolidatedColors.length === 1
+      ? "We've consolidated similar colors into one option."
+      : "Here are multiple distinct color options to choose from.";
+    alert(message);
+
+    consolidatedColors.forEach((rgb) => {
       const colorName = mapColorToBasicName(rgb);
       const [r, g, b] = rgb;
       const button = document.createElement('button');
@@ -456,40 +482,35 @@
   }
 
   function showResults() {
-  productList.innerHTML = '';
+    productList.innerHTML = '';
 
-  const range = 50; // Allowable range for approximate matching
+    const range = 50;
 
-  const matches = dataset.filter(item => {
-    // If no color is selected, match all items in the selected category
-    if (!selectedColor) return item.category === selectedCategory;
+    const matches = dataset.filter(item => {
+      if (!selectedColor) return item.category === selectedCategory;
 
-    // Ensure the item has a colors array; fallback to an empty array if missing
-    const itemColors = item.colors || [];
-
-    // Check if any color in the item's colors array is within the range
-    return item.category === selectedCategory &&
-           itemColors.some(color => (
-             Math.abs(color[0] - selectedColor[0]) <= range &&
-             Math.abs(color[1] - selectedColor[1]) <= range &&
-             Math.abs(color[2] - selectedColor[2]) <= range
-           ));
-  });
-
-  if (matches.length === 0) {
-    productList.innerHTML = '<li>No matches found. Please try again with a better picture or look through the help section.</li>';
-  } else {
-    matches.forEach(match => {
-      const listItem = document.createElement('li');
-      listItem.innerHTML = `
-        <img src="${match.file}" alt="${match.name}" class="result-thumbnail">
-        <p>${match.name}</p>
-        <a href="${match.link}" target="_blank">View Product</a>
-      `;
-      productList.appendChild(listItem);
+      const itemColors = item.colors || [];
+      return item.category === selectedCategory &&
+        itemColors.some(color => (
+          Math.abs(color[0] - selectedColor[0]) <= range &&
+          Math.abs(color[1] - selectedColor[1]) <= range &&
+          Math.abs(color[2] - selectedColor[2]) <= range
+        ));
     });
-  }
-  resultSection.style.display = 'block';
-}
 
+    if (matches.length === 0) {
+      productList.innerHTML = '<li>No matches found. Please try again with a better picture or look through the help section.</li>';
+    } else {
+      matches.forEach(match => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `
+          <img src="${match.file}" alt="${match.name}" class="result-thumbnail">
+          <p>${match.name}</p>
+          <a href="${match.link}" target="_blank">View Product</a>
+        `;
+        productList.appendChild(listItem);
+      });
+    }
+    resultSection.style.display = 'block';
+  }
 });
