@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+ document.addEventListener('DOMContentLoaded', () => {
   const imageInput = document.getElementById('imageInput');
   const classifyButton = document.getElementById('classifyButton');
   const loadingSpinner = document.getElementById('loadingSpinner');
@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const colorButtons = document.getElementById('colorButtons');
   const productList = document.getElementById('productList');
 
-const dataset = [
+ const dataset = [
     { 
     "name": "Black Coat 2", 
     "category": "coats", 
@@ -331,7 +331,7 @@ const dataset = [
     "file": "matched_items/White Sweater 2.png", 
     "link": "Ekru Kadın Dik Yaka Kazak Uzun Kollu Saç Örgü Desenli 5WAK90087HT | Koton"}
   ];
-  
+
   const categories = ["coats", "sweaters", "boots", "pants", "skirts"];
   let selectedCategory = null;
   let selectedColor = null;
@@ -351,51 +351,60 @@ const dataset = [
       const img = new Image();
       img.src = event.target.result;
       img.onload = () => {
-        const dominantColor = extractDominantColor(img);
+        const dominantColors = extractDominantColors(img, 6); // Extract 6 colors
         loadingSpinner.style.display = 'none';
 
-        console.log('Dominant Color:', dominantColor); // Debugging
+        console.log('Dominant Colors:', dominantColors); // Debugging
         showCategories();
-        setupColorButtons([dominantColor]);
+        setupColorButtons(dominantColors);
       };
     };
     reader.readAsDataURL(file);
   });
 
-  function extractDominantColor(img) {
+  function extractDominantColors(img, numColors) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.drawImage(img, 0, 0, img.width, img.height);
+    // Focus on the middle 50% of the image
+    const regionWidth = img.width * 0.5;
+    const regionHeight = img.height * 0.5;
+    const startX = (img.width - regionWidth) / 2;
+    const startY = (img.height - regionHeight) / 2;
 
-    const imageData = ctx.getImageData(0, 0, img.width, img.height);
+    canvas.width = regionWidth;
+    canvas.height = regionHeight;
+    ctx.drawImage(img, startX, startY, regionWidth, regionHeight, 0, 0, regionWidth, regionHeight);
+
+    const imageData = ctx.getImageData(0, 0, regionWidth, regionHeight);
     const pixels = imageData.data;
 
-    return calculateDominantColor(pixels);
+    return calculateDominantColors(pixels, numColors);
   }
 
-  function calculateDominantColor(pixels) {
+  function calculateDominantColors(pixels, numColors) {
     const colorCounts = {};
-    let maxCount = 0;
-    let dominantColor = [0, 0, 0];
+    const dominantColors = [];
 
     for (let i = 0; i < pixels.length; i += 4) {
-      const r = Math.round(pixels[i] / 10) * 10; // Reduce precision to group similar shades
+      const r = Math.round(pixels[i] / 10) * 10;
       const g = Math.round(pixels[i + 1] / 10) * 10;
       const b = Math.round(pixels[i + 2] / 10) * 10;
 
       const rgb = `${r},${g},${b}`;
       colorCounts[rgb] = (colorCounts[rgb] || 0) + 1;
-
-      if (colorCounts[rgb] > maxCount) {
-        maxCount = colorCounts[rgb];
-        dominantColor = [r, g, b];
-      }
     }
 
-    return dominantColor;
+    const sortedColors = Object.entries(colorCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, numColors);
+
+    sortedColors.forEach(([rgb]) => {
+      const [r, g, b] = rgb.split(',').map(Number);
+      dominantColors.push([r, g, b]);
+    });
+
+    return dominantColors;
   }
 
   function mapColorToBasicName(rgb) {
@@ -404,8 +413,10 @@ const dataset = [
     if (r > 200 && g < 100 && b < 100) return "Red";
     if (r < 100 && g > 200 && b < 100) return "Green";
     if (r < 100 && g < 100 && b > 200) return "Blue";
-    if (r > 100 && g < 50 && b < 50) return "Brown";
+    if (r > 150 && g > 100 && b < 50) return "Brown";
+    if (r > 150 && g < 100 && b > 150) return "Pink";
     if (r < 50 && g < 50 && b < 50) return "Black";
+    if (r > 100 && g > 100 && b > 100) return "Grey";
     return "Other";
   }
 
@@ -433,10 +444,10 @@ const dataset = [
       const button = document.createElement('button');
       button.textContent = colorName;
       button.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
-      button.style.border = '2px solid black'; // Add a black outline
+      button.style.border = '2px solid black';
       button.className = 'color-button';
       button.addEventListener('click', () => {
-        selectedColor = rgb;
+        selectedColor = colorName === "Other" ? null : rgb;
         colorSection.style.display = 'none';
         showResults();
       });
@@ -444,35 +455,31 @@ const dataset = [
     });
   }
 
-function showResults() {
-  productList.innerHTML = '';
-  const range = 50; // Allowable range for approximate matching
+  function showResults() {
+    productList.innerHTML = '';
 
-  const matches = dataset.filter(item => {
-    const colorDiff = Math.abs(item.color[0] - selectedColor[0]) +
-                      Math.abs(item.color[1] - selectedColor[1]) +
-                      Math.abs(item.color[2] - selectedColor[2]);
-
-    return item.category === selectedCategory &&
-           Math.abs(item.color[0] - selectedColor[0]) <= range &&
-           Math.abs(item.color[1] - selectedColor[1]) <= range &&
-           Math.abs(item.color[2] - selectedColor[2]) <= range;
-  });
-
-  if (matches.length === 0) {
-    productList.innerHTML = '<li>No matches found. Please try again with a better picture or look through the help section.</li>';
-  } else {
-    matches.forEach(match => {
-      const listItem = document.createElement('li');
-      listItem.innerHTML = `
-        <img src="${match.file}" alt="${match.name}" class="result-thumbnail">
-        <p>${match.name}</p>
-        <a href="${match.link}" target="_blank">View Product</a>
-      `;
-      productList.appendChild(listItem);
+    const matches = dataset.filter(item => {
+      if (selectedColor === null) return item.category === selectedCategory;
+      const range = 50;
+      return item.category === selectedCategory &&
+             Math.abs(item.color[0] - selectedColor[0]) <= range &&
+             Math.abs(item.color[1] - selectedColor[1]) <= range &&
+             Math.abs(item.color[2] - selectedColor[2]) <= range;
     });
-  }
-  resultSection.style.display = 'block';
-}
 
+    if (matches.length === 0) {
+      productList.innerHTML = '<li>No matches found. Please try again with a better picture or look through the help section.</li>';
+    } else {
+      matches.forEach(match => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `
+          <img src="${match.file}" alt="${match.name}" class="result-thumbnail">
+          <p>${match.name}</p>
+          <a href="${match.link}" target="_blank">View Product</a>
+        `;
+        productList.appendChild(listItem);
+      });
+    }
+    resultSection.style.display = 'block';
+  }
 });
