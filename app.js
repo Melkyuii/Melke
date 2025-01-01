@@ -456,30 +456,37 @@
   }
 
   function showResults() {
-    productList.innerHTML = '';
+  productList.innerHTML = '';
 
-    const matches = dataset.filter(item => {
-      if (selectedColor === null) return item.category === selectedCategory;
-      const range = 50;
-      return item.category === selectedCategory &&
-             Math.abs(item.color[0] - selectedColor[0]) <= range &&
-             Math.abs(item.color[1] - selectedColor[1]) <= range &&
-             Math.abs(item.color[2] - selectedColor[2]) <= range;
+  const range = 50; // Allowable range for approximate matching
+
+  const matches = dataset.filter(item => {
+    // If no color is selected, match all items in the selected category
+    if (!selectedColor) return item.category === selectedCategory;
+
+    // Check if any color in the item's colors array is within the range
+    return item.category === selectedCategory &&
+           item.colors.some(color => (
+             Math.abs(color[0] - selectedColor[0]) <= range &&
+             Math.abs(color[1] - selectedColor[1]) <= range &&
+             Math.abs(color[2] - selectedColor[2]) <= range
+           ));
+  });
+
+  if (matches.length === 0) {
+    productList.innerHTML = '<li>No matches found. Please try again with a better picture or look through the help section.</li>';
+  } else {
+    matches.forEach(match => {
+      const listItem = document.createElement('li');
+      listItem.innerHTML = `
+        <img src="${match.file}" alt="${match.name}" class="result-thumbnail">
+        <p>${match.name}</p>
+        <a href="${match.link}" target="_blank">View Product</a>
+      `;
+      productList.appendChild(listItem);
     });
-
-    if (matches.length === 0) {
-      productList.innerHTML = '<li>No matches found. Please try again with a better picture or look through the help section.</li>';
-    } else {
-      matches.forEach(match => {
-        const listItem = document.createElement('li');
-        listItem.innerHTML = `
-          <img src="${match.file}" alt="${match.name}" class="result-thumbnail">
-          <p>${match.name}</p>
-          <a href="${match.link}" target="_blank">View Product</a>
-        `;
-        productList.appendChild(listItem);
-      });
-    }
-    resultSection.style.display = 'block';
   }
+  resultSection.style.display = 'block';
+}
+
 });
