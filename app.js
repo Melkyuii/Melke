@@ -444,28 +444,35 @@ const dataset = [
     });
   }
 
-  function showResults() {
-    productList.innerHTML = '';
-    const matches = dataset.filter(item => {
-      const colorDiff = Math.abs(item.color[0] - selectedColor[0]) +
-                        Math.abs(item.color[1] - selectedColor[1]) +
-                        Math.abs(item.color[2] - selectedColor[2]);
-      return item.category === selectedCategory && colorDiff < 100;
-    });
+function showResults() {
+  productList.innerHTML = '';
+  const range = 50; // Allowable range for approximate matching
 
-    if (matches.length === 0) {
-      productList.innerHTML = '<li>No matches found. Please try again with a better picture or look through the help section.</li>';
-    } else {
-      matches.forEach(match => {
-        const listItem = document.createElement('li');
-        listItem.innerHTML = `
-          <img src="${match.file}" alt="${match.name}" class="result-thumbnail">
-          <p>${match.name}</p>
-          <a href="${match.link}" target="_blank">View Product</a>
-        `;
-        productList.appendChild(listItem);
-      });
-    }
-    resultSection.style.display = 'block';
+  const matches = dataset.filter(item => {
+    const colorDiff = Math.abs(item.color[0] - selectedColor[0]) +
+                      Math.abs(item.color[1] - selectedColor[1]) +
+                      Math.abs(item.color[2] - selectedColor[2]);
+
+    return item.category === selectedCategory &&
+           Math.abs(item.color[0] - selectedColor[0]) <= range &&
+           Math.abs(item.color[1] - selectedColor[1]) <= range &&
+           Math.abs(item.color[2] - selectedColor[2]) <= range;
+  });
+
+  if (matches.length === 0) {
+    productList.innerHTML = '<li>No matches found. Please try again with a better picture or look through the help section.</li>';
+  } else {
+    matches.forEach(match => {
+      const listItem = document.createElement('li');
+      listItem.innerHTML = `
+        <img src="${match.file}" alt="${match.name}" class="result-thumbnail">
+        <p>${match.name}</p>
+        <a href="${match.link}" target="_blank">View Product</a>
+      `;
+      productList.appendChild(listItem);
+    });
   }
+  resultSection.style.display = 'block';
+}
+
 });
